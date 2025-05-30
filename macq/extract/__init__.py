@@ -12,12 +12,15 @@ from .arms import ARMS
 from .locm import LOCM
 from .slaf import SLAF
 from .observer import Observer
+from .signature_parameter import ObjectType, SignatureParameter
+from .model_fluents import LiftedFluent, ParameterBoundLiteral, GroundedFluent
 
 __all__ = [
     "LearnedAction",
     "LearnedLiftedAction",
     "LearnedFluent",
     "LearnedLiftedFluent",
+    "ObjectType",
     "Model",
     "Extract",
     "modes",
