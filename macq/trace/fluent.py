@@ -1,6 +1,7 @@
 from typing import List
 
 
+
 class PlanningObject:
     """An object of a planning domain.
 

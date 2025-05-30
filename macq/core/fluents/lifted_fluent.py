@@ -1,10 +1,5 @@
 from typing import List
-from .signature_parameter import SignatureParameter
-from macq.trace.fluent import PlanningObject, Fluent
-
-# use the grounded prefix over the fluent class name to simplify the
-# meaning when a new contributor needs to understand different fluent classes.
-
+from ..signature_parameter import SignatureParameter
 
 class LiftedFluent:
     """Represents a lifted fluent, which is a structural element often used in
@@ -39,35 +34,3 @@ class LiftedFluent:
 
     def __eq__(self, other):
         return isinstance(other, LiftedFluent) and hash(self) == hash(other)
-
-
-    
-
-class ParameterBoundLiteral:
-    name: str
-    bounded_params: List[str]
-
-    def __init__(self,
-                 name: str,
-                 bounded_params: List[str]):
-        
-        self.name = name
-        self.bounded_params = bounded_params
-
-
-    def __str__(self):
-        string = f"({self.name + ' '.join(self.bounded_params)})"
-        return string
-
-    def ground(self, objects: List[PlanningObject]):
-        return Fluent(self.name, objects)
-
-
-class GroundedFluent:
-
-    name: str
-    objects: List[PlanningObject]
-
-    def __init__(self, name: str, objects: List[PlanningObject]):
-        self.name = name
-        self.objects = objects

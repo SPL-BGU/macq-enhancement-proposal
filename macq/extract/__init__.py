@@ -12,8 +12,7 @@ from .arms import ARMS
 from .locm import LOCM
 from .slaf import SLAF
 from .observer import Observer
-from .signature_parameter import ObjectType, SignatureParameter
-from .model_fluents import LiftedFluent, ParameterBoundLiteral, GroundedFluent
+from macq.core.signature_parameter import ObjectType
 
 __all__ = [
     "LearnedAction",

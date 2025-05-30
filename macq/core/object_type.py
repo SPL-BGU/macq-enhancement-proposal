@@ -1,8 +1,16 @@
-from dataclasses import dataclass
 from typing import Optional
 
 
-def is_circular_hierarchy_error(child_type_name: str, parent: "ObjectType"):
+class CircularTypeHierarchyException(Exception):
+    def __init__(self, message=None):
+        super().__init__()
+        self.message = message
+
+    def __str__(self):
+        return "Circular Type Hierarchy Error: " + self.message if self.message \
+            else "Circular Type Hierarchy Error - validate inputs of ObjectType init function."
+
+def is_circular_type_hierarchy_error(child_type_name: str, parent: "ObjectType"):
     """
     Checks whether adding a `child_type_name` as a child of `parent` creates a circular hierarchy.
 
@@ -28,17 +36,6 @@ def is_circular_hierarchy_error(child_type_name: str, parent: "ObjectType"):
         current = current.parent
     return False
 
-
-class CircularTypeHierarchyException(Exception):
-    def __init__(self, message=None):
-        super().__init__()
-        self.message = message
-    
-    def __str__(self):
-        return "Circular Type Hierarchy Error: " + self.message if self.message\
-            else "Circular Type Hierarchy Error - validate inputs of ObjectType init function."
-
-
 class ObjectType:
     """clss representation of a type matching the tarski lang sort representation
     the type can be illustrated as a directed graph with no cycles"""
@@ -46,10 +43,10 @@ class ObjectType:
     parent_type: Optional["ObjectType"]
 
 
-    def __init__(self, type_name: str="object", parent=None):
+    def __init__(self, type_name: str ="object", parent=None):
         """if sort has a parent of type DomainSort, input the parent sort name
         if the sort has no learned parent, the parent argument can remain empty"""
-        if is_circular_hierarchy_error(type_name, parent):
+        if is_circular_type_hierarchy_error(type_name, parent):
             raise CircularTypeHierarchyException(
                 f" Type '{type_name}' would create a circular hierarchy with parent '{parent.type_name}'")
 
@@ -100,15 +97,3 @@ class ObjectType:
         return f"name: {self.type_name}{postfix}"
 
 
-@dataclass
-class SignatureParameter:
-    name: str
-    object_type: ObjectType = None
-
-    def __post_init__(self):
-        # Initialize with the default ObjectType if None is provided
-        if self.object_type is None:
-            self.object_type = ObjectType("object")
-
-    def __str__(self):
-        return f"?{self.name}"
