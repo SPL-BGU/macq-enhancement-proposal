@@ -1,28 +1,30 @@
-from abc import abstractmethod
-from json import dumps, loads
+from json import dumps
 from typing import Set, Union, Optional, List
 
 import tarski
 import tarski.fstrips as fs
-from tarski.fol import FirstOrderLanguage
+from tarski import FirstOrderLanguage
 from tarski.io import fstrips as iofs
+from tarski.model import create
 from tarski.syntax import land
-from tarski.syntax.formulas import CompoundFormula, Connective, top
+from tarski.syntax.formulas import CompoundFormula, Connective, top, Formula
 
 from . import ObjectType
-from ..utils import ComplexEncoder
 from .actions import GroundedAction, LiftedAction
-from .fluents import LiftedFluent, ParameterBoundLiteral, GroundedFluent
+from .fluents import LiftedFluent, GroundedFluent
 from .model_type_validate import ModelType, ModelTypeValidator, ModelValidationError
+from ..utils import ComplexEncoder
 
-from typing import TypeVar, Protocol
 
+def _get_str_as_tarski_grounded_formula(name: str, lang: FirstOrderLanguage) -> Formula:
+    """Converts a string (referencing an attribute of a LearnedAction, i.e., a specific precondition or effect))
+    to a Formula.
+    """
+    return lang.get(name.replace(" ", "_"))()
 
-# If you want to constrain to specific types, use this instead:
-# ActionType = TypeVar('ActionType', LiftedAction, GroundedAction)
 
 class Model:
-    """Action model with a factory pattern for type-safe creation."""
+    """Class representation of an Action-model."""
 
     def __init__(
             self,
@@ -208,12 +210,10 @@ class Model:
                 if len(precond_list) == 1:
                     precond = precond_list[0]
                 elif len(precond_list) == 0:
-                    precond = top
+                    precond = top # always true
 
                 else:
-                    precond = CompoundFormula(
-                        Connective.And, precond_list ,
-                    )
+                    precond = CompoundFormula(Connective.And, precond_list,)
 
                 adds = [lang.get(f.name)(*[vars[i] for i, _ in enumerate(f.bounded_params)]) for f in a.add_effects]  # type: ignore TODO validate for i, _ in enumerate(f.bounded_params)
                 dels = [lang.get(f.name)(*[vars[i] for i, _ in enumerate(f.bounded_params)]) for f in a.delete_effects]  # type: ignore TODO for i, _ in enumerate(f.bounded_params)
@@ -230,6 +230,35 @@ class Model:
         problem.goal = land()  # type: ignore
         writer = iofs.FstripsWriter(problem)
         writer.write(domain_filename, problem_filename)
+
+    def __to_tarski_formula(self,
+                            attribute: Set[str],
+                            lang: FirstOrderLanguage) -> Union[CompoundFormula, top]:
+        """Converts a set of strings (referencing an attribute of a LearnedAction, i.e., its preconditions)
+        to an Atom or CompoundFormula, in order to set up a tarski action.
+
+        Args:
+            attribute (Set[str]):
+                The attribute to be converted to an Atom or CompoundFormula.
+            lang (FirstOrderLanguage):
+                The relevant language.
+
+        Returns:
+            The attribute of the LearnedAction, converted to an Atom or CompoundFormula.
+        """
+        # return top if there are no constraints
+        if not attribute:
+            return top
+        # creates Atom
+        elif len(attribute) == 1:
+            grounding =  _get_str_as_tarski_grounded_formula(attribute, lang)  # type: ignore
+            return CompoundFormula(Connective.And, [grounding],)
+
+        # creates CompoundFormula
+        else:
+            return CompoundFormula(
+                Connective.And, [self._get_str_as_tarski_formula(a, lang) for a in attribute],)  # type: ignore
+
 
     def to_pddl_grounded(
         self,
@@ -251,55 +280,80 @@ class Model:
             problem_filename (str):
                 The name of the problem file to be generated.
         """
-        pass
-        # lang = tarski.language(domain_name)
-        # problem = tarski.fstrips.create_fstrips_problem(
-        #     domain_name=domain_name, problem_name=problem_name, language=lang
-        # )
-        # if self.fluents:
-        #     # create 0-arity predicates
-        #     for f in self.fluents:
-        #         # NOTE: want there to be no brackets in any fluents referenced as tarski adds these later.
-        #         # fluents (their string conversion) must be in the following format: (on object a object b)
-        #         test = str(f)
-        #         lang.predicate(str(f)[1:-1].replace(" ", "_"))
-        # if self.actions:
-        #     for a in self.actions:
-        #         # fetch all the relevant 0-arity predicates and create formulas to set up the ground actions
-        #         preconds = self.__to_tarski_formula({a[1:-1] for a in a.precond}, lang)
-        #         adds = [lang.get(f"{e.replace(' ', '_')[1:-1]}")() for e in a.add]
-        #         dels = [lang.get(f"{e.replace(' ', '_')[1:-1]}")() for e in a.delete]
-        #         effects = [fs.AddEffect(e) for e in adds]
-        #         effects.extend([fs.DelEffect(e) for e in dels])
-        #         # set up action
-        #         problem.action(
-        #             name=a.details()
-        #             .replace("(", "")
-        #             .replace(")", "")
-        #             .replace(" ", "_"),
-        #             parameters=[],
-        #             precondition=preconds,
-        #             effects=effects,
-        #         )
-        # # create empty init and goal
-        # problem.init = tarski.model.create(lang)
-        # problem.goal = land()
-        # # write to files
-        # writer = iofs.FstripsWriter(problem)
-        # writer.write(domain_filename, problem_filename)
 
-    @staticmethod
-    def deserialize(string: str):
-        """Deserializes a json string into a Model.
+        lang = tarski.language(domain_name)
+        problem = tarski.fstrips.create_fstrips_problem(
+            domain_name=domain_name, problem_name=problem_name, language=lang
+        )
+        if self.fluents:
+            # create 0-arity predicates
+            for f in self.fluents:
+                # NOTE: want there to be no brackets in any fluents referenced as tarski adds these later.
+                # fluents (their string conversion) must be in the following format: (on object a object b)
+                test = str(f)
+                lang.predicate(str(f)[1:-1].replace(" ", "_"))
 
-        Args:
-            string (str):
-                The json string representing a model.
+        if self.actions:
+            for a in self.actions:
 
-        Returns:
-            A Model object matching the one specified by `string`.
-        """
-        return Model._from_json(loads(string))
+                # fetch all the relevant 0-arity predicates and create formulas to set up the ground actions
+                positive_preconds = [_get_str_as_tarski_grounded_formula(
+                                        a[1:-1], lang) for a in a.positive_preconditions]
+                # create a set of negative preconditions
+                negative_preconds = [CompoundFormula(Connective.Not,
+                                                     _get_str_as_tarski_grounded_formula(a[1:-1], lang),)
+                                                    for a in a.negative_preconditions]
+
+                precond_list = positive_preconds + negative_preconds
+                if len(precond_list) == 1:
+                    preconds = precond_list[0]
+                elif len(precond_list) == 0:
+                    preconds = top # always true
+                else:
+                    preconds = CompoundFormula(Connective.And, precond_list,)
+
+
+
+                adds = [lang.get(f"{e.replace(' ', '_')[1:-1]}")() for e in a.add_effects] #todo validate on different
+                dels = [lang.get(f"{e.replace(' ', '_')[1:-1]}")() for e in a.delete_effects]
+                effects = [fs.AddEffect(e) for e in adds]
+                effects.extend([fs.DelEffect(e) for e in dels])
+                # set up action
+                problem.action(
+                    name=a.details()
+                    .replace("(", "")
+                    .replace(")", "")
+                    .replace(" ", "_"),
+                    parameters=[],
+                    precondition=preconds,
+                    effects=effects,)
+
+        # create empty init and goal
+        problem.init = tarski.model.create(lang)
+        problem.goal = land()
+        # write to files
+        writer = iofs.FstripsWriter(problem)
+        writer.write(domain_filename, problem_filename)
+
+    # TODO complete
+    # @classmethod
+    # def _from_json(cls, data: dict):
+    #     actions = set(map(_deserialize, data["actions"]))
+    #     return cls(set(data["fluents"]), actions)
+
+    # TODO complete
+    # @staticmethod
+    # def deserialize(string: str):
+    #     """Deserializes a json string into a Model.
+    #
+    #     Args:
+    #         string (str):
+    #             The json string representing a model.
+    #
+    #     Returns:
+    #         A Model object matching the one specified by `string`.
+    #     """
+    #     return Model._from_json(loads(string))
 
 # TODO finish
     # @classmethod

@@ -4,12 +4,12 @@ class PlanningObject:
     """An object of a planning domain.
 
     Attributes:
-        obj_type (str):
-            The type of object in the problem domain.
-            Example: "block".
         name (str):
-            The name of the object.
-            Example: "A"
+            the object's name.
+        obj_type (str):
+            The type of the object in the problem domain.
+            Example: "block".
+
     """
 
     def __init__(self, name: str, obj_type: ObjectType):
@@ -21,8 +21,9 @@ class PlanningObject:
             obj_type (str):
                 The type of the object in the problem domain.
         """
-        self.obj_type = obj_type
         self.name = name
+        self.obj_type = obj_type
+
 
     def __hash__(self):
         return hash(self.name)

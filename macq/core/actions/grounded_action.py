@@ -3,8 +3,9 @@ from typing import List, Set
 from ..planning_object import PlanningObject
 from ..fluents.grounded_fluent import GroundedFluent
 
-class GroundedAction:
 
+# TODO finish implementation
+class GroundedAction:
     name: str
     params: List[PlanningObject]
     positive_preconditions: Set[GroundedFluent]

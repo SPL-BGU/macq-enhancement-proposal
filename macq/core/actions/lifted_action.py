@@ -1,16 +1,16 @@
 from typing import List, Set
 
 from ..signature_parameter import SignatureParameter
-from ..fluents.parameter_bound_literal import ParameterBoundLiteral
+from ..fluents.parameter_bound_fluent import ParameterBoundFluent
 
 class LiftedAction:
 
     name: str
     params: List[SignatureParameter]
-    positive_preconditions: Set[ParameterBoundLiteral]
-    negative_preconditions: Set[ParameterBoundLiteral] | None
-    add_effects: Set[ParameterBoundLiteral]
-    delete_effects: Set[ParameterBoundLiteral]
+    positive_preconditions: Set[ParameterBoundFluent]
+    negative_preconditions: Set[ParameterBoundFluent] | None
+    add_effects: Set[ParameterBoundFluent]
+    delete_effects: Set[ParameterBoundFluent]
 
 
     def __init__(self, name: str, params: List[SignatureParameter]):

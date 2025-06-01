@@ -1,6 +1,6 @@
 from .signature_parameter import SignatureParameter
 from .object_type import ObjectType, CircularTypeHierarchyException, is_circular_type_hierarchy_error
-from .fluents import LiftedFluent, ParameterBoundLiteral, GroundedFluent
+from .fluents import LiftedFluent, ParameterBoundFluent, GroundedFluent
 from .actions import LiftedAction, GroundedAction
 from .model_type_validate import ModelTypeValidator, ModelType
 
@@ -16,7 +16,7 @@ __all__ = [
     "LiftedAction",
     "GroundedAction",
     "LiftedFluent",
-    "ParameterBoundLiteral",
+    "ParameterBoundFluent",
     "GroundedFluent",
     "ModelType",
     "ModelTypeValidator",

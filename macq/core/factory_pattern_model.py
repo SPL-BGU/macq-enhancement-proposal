@@ -1,16 +1,15 @@
+from typing import Set, Union, List, Optional
 
-from json import dumps, loads
-from typing import Set, Union, List, Optional, Type, Any
-from .model_type_validate import ModelTypeValidator, ModelType, ModelValidationError
-from ..utils import ComplexEncoder
-from .actions import GroundedAction, LiftedAction
-from .fluents import LiftedFluent, ParameterBoundLiteral, GroundedFluent
 from .action_model import Model
+from .actions import GroundedAction, LiftedAction
+from .fluents import LiftedFluent, ParameterBoundFluent, GroundedFluent
+from .model_type_validate import ModelTypeValidator, ModelType, ModelValidationError
+
 
 # Factory Functions - The main interface for creating models
 
 def create_lifted_model(
-    fluents: Set[Union[LiftedFluent, ParameterBoundLiteral]], 
+    fluents: Set[Union[LiftedFluent, ParameterBoundFluent]],
     actions: Set[LiftedAction],
     learned_sorts: Optional[List] = None
 ) -> Model:
@@ -30,7 +29,7 @@ def create_lifted_model(
     """
     # Validate types
     for fluent in fluents:
-        if not isinstance(fluent, (LiftedFluent, ParameterBoundLiteral)):
+        if not isinstance(fluent, (LiftedFluent, ParameterBoundFluent)):
             raise ModelValidationError(
                 f"Expected LiftedFluent or ParameterBoundLiteral, got {type(fluent)}"
             )
@@ -90,62 +89,36 @@ def create_grounded_model(
     )
 
 def create_model_from_components(
-    fluents: Set, 
+    fluents: Set,
     actions: Set,
     learned_sorts: Optional[List] = None
 ) -> Model:
     """
     Create a model by auto-detecting the type from components.
-    
+
     Args:
         fluents: Set of fluent objects
         actions: Set of action objects
         learned_sorts: Optional list of sorts
-    
+
     Returns:
         A validated Model of the appropriate type
-    
+
     Raises:
         ModelValidationError: If the components are inconsistent or unknown type
     """
     model_type = ModelTypeValidator.validate_model_consistency(actions, fluents)
-    
+
     if model_type == ModelType.UNKNOWN:
         raise ModelValidationError("Cannot determine model type from provided components")
-    
+
     return Model(
-        fluents=fluents, 
-        actions=actions, 
+        fluents=fluents,
+        actions=actions,
         learned_sorts=learned_sorts,
         model_type=model_type,
-        _skip_validation=True
-    )
+        _skip_validation=True)
 
-# Convenience class methods as alternatives to factory functions
-def _add_factory_methods_to_model():
-    """Add factory methods to the Model class."""
-    
-    @classmethod
-    def create_lifted(cls, fluents: Set[Union[LiftedFluent, ParameterBoundLiteral]], 
-                     actions: Set[LiftedAction], learned_sorts: Optional[List] = None) -> 'Model':
-        return create_lifted_model(fluents, actions, learned_sorts)
-    
-    @classmethod
-    def create_grounded(cls, fluents: Set[GroundedFluent], 
-                       actions: Set[GroundedAction], learned_sorts: Optional[List] = None) -> 'Model':
-        return create_grounded_model(fluents, actions, learned_sorts)
-    
-    @classmethod
-    def create_auto(cls, fluents: Set, actions: Set, learned_sorts: Optional[List] = None) -> 'Model':
-        return create_model_from_components(fluents, actions, learned_sorts)
-    
-    # Add these methods to the Model class
-    Model.create_lifted = create_lifted
-    Model.create_grounded = create_grounded
-    Model.create_auto = create_auto
-
-# Call this to add the class methods
-_add_factory_methods_to_model()
 
 # Usage examples and type-safe functions
 
@@ -171,14 +144,14 @@ def merge_models_safe(model1: Model, model2: Model) -> Model:
     
     return create_model_from_components(merged_fluents, merged_actions, merged_sorts)
 
-def convert_to_grounded(lifted_model: Model, objects: List) -> Model:
-    """Convert a lifted model to a grounded model (placeholder implementation)."""
-    if not lifted_model.is_lifted_model():
-        raise ModelValidationError("Can only ground lifted models")
-    
-    # This would contain your actual grounding logic
-    # For now, it's just a placeholder
-    grounded_fluents = set()  # Your grounding logic here
-    grounded_actions = set()   # Your grounding logic here
-    
-    return create_grounded_model(grounded_fluents, grounded_actions)
+# def convert_to_grounded(lifted_model: Model, objects: List) -> Model:
+#     """Convert a lifted model to a grounded model (placeholder implementation)."""
+    # if not lifted_model.is_lifted_model():
+    #     raise ModelValidationError("Can only ground lifted models")
+    #
+    # # This would contain your actual grounding logic
+    # # For now, it's just a placeholder
+    # grounded_fluents = set()  # Your grounding logic here
+    # grounded_actions = set()   # Your grounding logic here
+    #
+    # return create_grounded_model(grounded_fluents, grounded_actions)
