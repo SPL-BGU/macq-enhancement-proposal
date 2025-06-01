@@ -29,8 +29,14 @@ class LiftedFluent:
     def __str__(self):
         return self.name + ' '.join(map(str,self.parameters))
 
+    def  details(self):
+        return str(self)
+
     def __repr__(self):
         return self.name
 
     def __eq__(self, other):
         return isinstance(other, LiftedFluent) and hash(self) == hash(other)
+
+    def _serialize(self):
+        return self.details()

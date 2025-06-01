@@ -13,4 +13,10 @@ class SignatureParameter:
             self.object_type = ObjectType("object")
 
     def __str__(self):
-        return f"?{self.name}"
+        return f"{self.name}"
+
+    def details(self):
+        return f"{self.name} {self.object_type}"
+
+    def __hash__(self):
+        return hash(str(self))

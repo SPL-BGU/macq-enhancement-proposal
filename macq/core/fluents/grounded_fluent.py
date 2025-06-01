@@ -21,11 +21,11 @@ class GroundedFluent:
         return binding
 
     def __str__(self):
-        return f"{self.name} {' '.join(planning_object.name for planning_object in self.objects)}"
+       return self.details()
 
     def details(self):
         if len(self.objects) > 0:
-            string = f"{self.name} {' '.join([o.name for o in self.objects])}"
+            string = f"{self.name} {' '.join([o.details() for o in self.objects])}"
 
         else:
             string = self.name
@@ -37,3 +37,9 @@ class GroundedFluent:
 
     def _serialize(self):
         return str(self)
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, other):
+        return isinstance(other, GroundedFluent) and hash(self) == hash(other)
