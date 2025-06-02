@@ -18,6 +18,16 @@ class ParameterBoundFluent:
         string = f"{self.name + ' '.join(map(str,self.bounded_params))}"
         return string
 
+    def __repr__(self):
+        return self.details()
+
+    def details(self):
+        return str(self)
+
+
+    def serialize(self):
+        return str(self)
+
     # todo implement
     def ground(self, objects: List[PlanningObject]):
         ...

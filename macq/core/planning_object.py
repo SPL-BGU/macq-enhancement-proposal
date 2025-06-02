@@ -32,7 +32,7 @@ class PlanningObject:
         return isinstance(other, PlanningObject) and self.name == other.name
 
     def details(self):
-        return " ".join([self.obj_type, self.name])
+        return " ".join([self.obj_type.type_name, self.name])
 
     def __repr__(self):
         return self.details()
