@@ -21,11 +21,25 @@ class LiftedAction:
         self.name = name
         self.params = params
 
+
     def __eq__(self, other):
-        raise NotImplementedError
+        return hash(self) == hash(other)
 
     def __hash__(self):
-        raise NotImplementedError
+        return hash((
+             self.name,
+             tuple(self.params),
+             frozenset(self.positive_preconditions),
+             frozenset(self.negative_preconditions),
+             frozenset(self.add_effects),
+             frozenset(self.delete_effects),))
+
 
     def __str__(self):
-        raise NotImplementedError
+        return self.details()
+
+    def details(self):
+        return f"({self.name} {' '.join(param.object_type.type_name for param in self.params)})"
+
+    def __repr__(self) -> str:
+        return self.details()
